@@ -58,6 +58,15 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
       });
     }
 
+    if (type === InteractionType.APPLICATION_COMMAND && name === 'ping') {
+      return res.send({
+        type: 4,
+        data: {
+          content: 'Pong!',
+        }
+      })
+    }
+
     console.error(`unknown command: ${name}`);
     return res.status(400).json({ error: 'unknown command' });
   }
@@ -66,6 +75,11 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
   return res.status(400).json({ error: 'unknown interaction type' });
 });
 
+app.get('/', (req, res) => {
+  res.send('OK');
+});
+
 app.listen(PORT, () => {
   console.log('Listening on port', PORT);
 });
+
