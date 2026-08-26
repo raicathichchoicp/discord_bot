@@ -1,4 +1,5 @@
 import 'dotenv/config';
+const BOT_TOKEN = process.env.DISCORD_TOKEN;
 import { getRPSChoices } from './game.js';
 import { capitalize, InstallGlobalCommands } from './utils.js';
 
@@ -52,4 +53,5 @@ const PING_COMMAND = {
 
 const ALL_COMMANDS = [TEST_COMMAND, CHALLENGE_COMMAND, PING_COMMAND];
 
-InstallGlobalCommands(process.env.APP_ID, ALL_COMMANDS);
+console.log('App ID:', process.env.APP_ID);
+InstallGlobalCommands((process.env.APP_ID || '').trim(), ALL_COMMANDS);

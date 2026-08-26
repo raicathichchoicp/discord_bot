@@ -6,9 +6,10 @@ export async function DiscordRequest(endpoint, options) {
   // Stringify payloads
   if (options.body) options.body = JSON.stringify(options.body);
   // Use fetch to make requests
+  console.log('Token thực tế:', process.env.DISCORD_TOKEN ? process.env.DISCORD_TOKEN.slice(0, 7) + '...' : 'CHƯA NẠP DỮ LIỆU (UNDEFINED)');
   const res = await fetch(url, {
     headers: {
-      Authorization: `Bot ${process.env.DISCORD_TOKEN}`,
+      Authorization: `Bot ${(process.env.DISCORD_TOKEN || '').trim()}`,
       'Content-Type': 'application/json; charset=UTF-8',
       'User-Agent': 'DiscordBot (https://github.com/discord/discord-example-app, 1.0.0)',
     },
@@ -24,12 +25,15 @@ export async function DiscordRequest(endpoint, options) {
   return res;
 }
 
-export async function InstallGlobalCommands(appId, commands) {
-  // API endpoint to overwrite global commands
-  const endpoint = `applications/${appId}/commands`;
 
+export async function InstallGlobalCommands(appId, commands) {
+  // Loại bỏ khoảng trắng và ký tự xuống dòng ẩn khỏi appId
+  // const cleanAppId = (appId || '').trim();
+  // const endpoint = `applications/${cleanAppId}/guilds/${process.env.GUILD_ID}/commands`;
+
+  const endpoint = `applications/${cleanAppId}/commands`;
+  
   try {
-    // This is calling the bulk overwrite endpoint: https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-global-application-commands
     await DiscordRequest(endpoint, { method: 'PUT', body: commands });
   } catch (err) {
     console.error(err);

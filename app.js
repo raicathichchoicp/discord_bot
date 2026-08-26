@@ -1,4 +1,5 @@
 import 'dotenv/config';
+const BOT_TOKEN = process.env.DISCORD_TOKEN;
 import express from 'express';
 import {
   ButtonStyleTypes,
@@ -25,6 +26,8 @@ const activeGames = {};
 app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async function (req, res) {
   // Interaction id, type and data
   const { id, type, data } = req.body;
+  // Measure request start time to report latency for /ping
+  const reqStart = Date.now();
 
   /**
    * Handle verification requests
@@ -37,7 +40,7 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
    * Handle slash command requests
    * See https://discord.com/developers/docs/interactions/application-commands#slash-commands
    */
-  if (type === InteractionType.APPLICATION_COMMAND) {
+    if (type === InteractionType.APPLICATION_COMMAND) {
     const { name } = data;
 
     // "test" command
@@ -58,13 +61,15 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
       });
     }
 
-    if (type === InteractionType.APPLICATION_COMMAND && name === 'ping') {
+    // "ping" command: report server processing latency
+    if (name === 'ping') {
+      const latency = Date.now() - reqStart;
       return res.send({
-        type: 4,
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
-          content: 'Pong!',
+          content: `Pong! ${latency}ms`,
         }
-      })
+      });
     }
 
     console.error(`unknown command: ${name}`);
