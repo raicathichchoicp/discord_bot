@@ -30,6 +30,7 @@ Before you start, you'll need to install [NodeJS](https://nodejs.org/en/download
 - `applications.commands`
 - `bot` (with Send Messages enabled)
 
+Fishing rewards are saved per Discord user in `data/players.json`, which is created automatically and excluded from Git. This local file works for a single bot instance; use a database or persistent volume if your hosting platform has ephemeral storage or runs multiple instances.
 
 Configuring the app is covered in detail in the [getting started guide](https://discord.com/developers/docs/getting-started).
 

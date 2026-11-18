@@ -12,6 +12,7 @@ import {
 import { getRandomEmoji, DiscordRequest } from './utils.js';
 import { getShuffledOptions, getResult, getRPSChoices } from './game.js';
 import { getRandomFish } from './fishingGame.js';
+import { addPlayerRewards } from './playerStore.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -73,13 +74,30 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
     }
 
     if (name === 'fishing') {
-        const caughtFish = getRandomFish();
-        return res.send({
-            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-            data: {
-                content: `You caught a ${caughtFish}!`
-            }
-        });
+      const context = req.body.context;
+      const userId = context === 0 ? req.body.member.user.id : req.body.user.id;
+      const caughtFish = getRandomFish();
+      const stats = addPlayerRewards(userId, caughtFish);
+
+      return res.send({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: `<@${userId}> caught a **${caughtFish.name}** (${caughtFish.rarity}) and earned **${caughtFish.gold} gold** and **${caughtFish.xp} XP**. Balance: **${stats.gold} gold**, **${stats.xp} XP**.`,
+        }
+      });
+    }
+
+    if (name === 'stats') {
+      const context = req.body.context;
+      const userId = context === 0 ? req.body.member.user.id : req.body.user.id;
+      const stats = getPlayerStats(userId);
+
+      return res.send({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: `<@${userId}> has **${stats.gold} gold** and **${stats.xp} XP**.`,
+        }
+      });
     }
 
     console.error(`unknown command: ${name}`);
