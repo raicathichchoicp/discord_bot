@@ -10,42 +10,25 @@ import {
   verifyKeyMiddleware,
 } from 'discord-interactions';
 import { getRandomEmoji, DiscordRequest } from './utils.js';
-import { getShuffledOptions, getResult } from './game.js';
+import { getShuffledOptions, getResult, getRPSChoices } from './game.js';
+import { getRandomFish } from './fishingGame.js';
 
-// Create an express app
 const app = express();
-// Get port, or default to 3000
 const PORT = process.env.PORT || 3000;
-// To keep track of our active games
 const activeGames = {};
 
-/**
- * Interactions endpoint URL where Discord will send HTTP requests
- * Parse request body and verifies incoming requests using discord-interactions package
- */
 app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async function (req, res) {
-  // Interaction id, type and data
   const { id, type, data } = req.body;
-  // Measure request start time to report latency for /ping
   const reqStart = Date.now();
 
-  /**
-   * Handle verification requests
-   */
   if (type === InteractionType.PING) {
     return res.send({ type: InteractionResponseType.PONG });
   }
 
-  /**
-   * Handle slash command requests
-   * See https://discord.com/developers/docs/interactions/application-commands#slash-commands
-   */
-    if (type === InteractionType.APPLICATION_COMMAND) {
+  if (type === InteractionType.APPLICATION_COMMAND) {
     const { name } = data;
 
-    // "test" command
     if (name === 'test') {
-      // Send a message into the channel where command was triggered from
       return res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
@@ -53,7 +36,6 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
           components: [
             {
               type: MessageComponentTypes.TEXT_DISPLAY,
-              // Fetches a random emoji to send from a helper function
               content: `hello world ${getRandomEmoji()}`
             }
           ]
@@ -61,7 +43,6 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
       });
     }
 
-    // "ping" command: report server processing latency
     if (name === 'ping') {
       const latency = Date.now() - reqStart;
       return res.send({
@@ -70,6 +51,35 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
           content: `Pong! ${latency}ms`,
         }
       });
+    }
+
+    if (name === 'challenge') {
+      const { options } = data;
+      const userChoice = options[0].value;
+      const botChoice = getRPSChoices()[Math.floor(Math.random() * getRPSChoices().length)];
+      const context = req.body.context;
+      const userId = context === 0 ? req.body.member.user.id : req.body.user.id;
+      const result = getResult(
+        { id: userId, objectName: userChoice },
+        { id: process.env.APP_ID, objectName: botChoice }
+      );
+
+      return res.send({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: `You chose ${userChoice}, I chose ${botChoice}. ${result}`,
+        }
+      });
+    }
+
+    if (name === 'fishing') {
+        const caughtFish = getRandomFish();
+        return res.send({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+                content: `You caught a ${caughtFish}!`
+            }
+        });
     }
 
     console.error(`unknown command: ${name}`);

@@ -51,7 +51,15 @@ const PING_COMMAND = {
   type: 1,
 }
 
-const ALL_COMMANDS = [TEST_COMMAND, CHALLENGE_COMMAND, PING_COMMAND];
+const FISHING_COMMAND = {
+  name: 'fishing',
+  description: 'Go fishing',
+  type: 1,
+  integration_types: [0, 1],
+  contexts: [0, 2],
+}
+
+const ALL_COMMANDS = [TEST_COMMAND, CHALLENGE_COMMAND, PING_COMMAND, FISHING_COMMAND];
 
 console.log('App ID:', process.env.APP_ID);
 InstallGlobalCommands((process.env.APP_ID || '').trim(), ALL_COMMANDS);

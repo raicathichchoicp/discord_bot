@@ -27,8 +27,11 @@ export async function DiscordRequest(endpoint, options) {
 
 
 export async function InstallGlobalCommands(appId, commands) {
-  // Loại bỏ khoảng trắng và ký tự xuống dòng ẩn khỏi appId
-  // const cleanAppId = (appId || '').trim();
+  const cleanAppId = appId.trim();
+  if (!cleanAppId) {
+    throw new Error('APP_ID is required to register application commands');
+  }
+
   // const endpoint = `applications/${cleanAppId}/guilds/${process.env.GUILD_ID}/commands`;
 
   const endpoint = `applications/${cleanAppId}/commands`;
