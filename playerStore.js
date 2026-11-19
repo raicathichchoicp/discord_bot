@@ -31,22 +31,74 @@ export function getPlayerStats(userId) {
     throw new Error('A Discord user ID is required');
   }
   const players = readPlayers();
-  return players[userId] || { gold: 0, xp: 0 };
+  const stats = players[userId];
+  return stats
+    ? {
+        gold: stats.gold || 0,
+        xp: stats.xp || 0,
+        luck: stats.luck || 0,
+        rods: Array.isArray(stats.rods) ? stats.rods : [],
+        equippedRod: stats.equippedRod || null,
+      }
+    : { gold: 0, xp: 0, luck: 0, rods: [], equippedRod: null };
 }
 
-export function addPlayerRewards(userId, { gold, xp }) {
+export function addPlayerRewards(userId, { gold, xp }, luck = 0) {
   if (!userId) {
     throw new Error('A Discord user ID is required');
   }
-  if (!Number.isSafeInteger(gold) || gold < 0 || !Number.isSafeInteger(xp) || xp < 0) {
-    throw new Error('Gold and XP rewards must be non-negative safe integers');
-  }
 
   const players = readPlayers();
-  const currentStats = players[userId] || { gold: 0, xp: 0 };
+  const currentStats = players[userId] || { gold: 0, xp: 0, luck: 0, rods: [], equippedRod: null };
+  const rods = Array.isArray(currentStats.rods) ? currentStats.rods : [];
   const updatedStats = {
     gold: currentStats.gold + gold,
     xp: currentStats.xp + xp,
+    luck: (currentStats.luck || 0) + luck,
+    rods: [...rods],
+    equippedRod: currentStats.equippedRod || null,
+  };
+  players[userId] = updatedStats;
+  writePlayers(players);
+  return updatedStats;
+}
+
+export function addRodToInventory(userId, rodName) {
+  if (!userId) {
+    throw new Error('A Discord user ID is required');
+  }
+
+  const players = readPlayers();
+  const currentStats = players[userId] || { gold: 0, xp: 0, luck: 0, rods: [], equippedRod: null };
+  const rods = Array.isArray(currentStats.rods) ? currentStats.rods : [];
+  const updatedStats = {
+    ...currentStats,
+    gold: currentStats.gold || 0,
+    xp: currentStats.xp || 0,
+    luck: currentStats.luck || 0,
+    rods: rods.includes(rodName) ? rods : [...rods, rodName],
+    equippedRod: currentStats.equippedRod || null,
+  };
+  players[userId] = updatedStats;
+  writePlayers(players);
+  return updatedStats;
+}
+
+export function equipRod(userId, rodName) {
+  if (!userId) {
+    throw new Error('A Discord user ID is required');
+  }
+
+  const players = readPlayers();
+  const currentStats = players[userId] || { gold: 0, xp: 0, luck: 0, rods: [], equippedRod: null };
+  const rods = Array.isArray(currentStats.rods) ? currentStats.rods : [];
+  if (!rods.includes(rodName)) {
+    throw new Error('You do not own that rod.');
+  }
+
+  const updatedStats = {
+    ...currentStats,
+    equippedRod: rodName,
   };
   players[userId] = updatedStats;
   writePlayers(players);

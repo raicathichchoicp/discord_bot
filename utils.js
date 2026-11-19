@@ -32,9 +32,9 @@ export async function InstallGlobalCommands(appId, commands) {
     throw new Error('APP_ID is required to register application commands');
   }
 
-  // const endpoint = `applications/${cleanAppId}/guilds/${process.env.GUILD_ID}/commands`;
+  const endpoint = `applications/${cleanAppId}/guilds/${process.env.GUILD_ID}/commands`;
 
-  const endpoint = `applications/${cleanAppId}/commands`;
+  //const endpoint = `applications/${cleanAppId}/commands`;
   
   try {
     await DiscordRequest(endpoint, { method: 'PUT', body: commands });

@@ -59,7 +59,72 @@ const FISHING_COMMAND = {
   contexts: [0, 2],
 }
 
-const ALL_COMMANDS = [TEST_COMMAND, CHALLENGE_COMMAND, PING_COMMAND, FISHING_COMMAND];
+const statsCommand = {
+  name: 'stats',
+  description: 'View your fishing stats',
+  type: 1,
+  integration_types: [0, 1],
+  contexts: [0, 2],
+};
+
+const shop ={
+   name: 'shop',
+   description: 'buy new rods and baits',
+   type: 1,
+   integration_types: [0, 1],
+   contexts: [0, 2],
+   options: [
+      {
+         type: 3,
+         name: 'item',
+         description: 'Choose an item to buy',
+         required: true,
+         choices: [
+            { name: 'Rusty Rod 100$', value: 'rusty_rod' },
+            { name: 'Wooden Rod 200$', value: 'wooden_rod' },
+            { name: 'Iron Rod 500$', value: 'iron_rod' },
+            { name: 'Golden Rod 1000$', value: 'golden_rod' },
+            { name: 'Diamond Rod 2000$', value: 'diamond_rod' },
+            { name: 'Legendary Rod 5000$', value: 'legendary_rod' },
+         ],
+      }
+   ]
+};
+
+const inventory = {
+   name: 'inventory',
+   description: 'View your inventory',
+   type: 1,
+   integration_types: [0, 1],
+   options: [
+    {
+      type: 3,
+      name: 'action',
+      description: 'Choose an action',
+      required: true,
+      choices: [
+        { name: 'View Inventory', value: 'view' },
+        { name: 'Equip Rod', value: 'equip' },
+      ],
+    },
+    {
+      type: 3,
+      name: 'rod',
+      description: 'Rod to equip',
+      required: false,
+      choices: [
+        { name: 'Rusty Rod', value: 'rusty_rod' },
+        { name: 'Wooden Rod', value: 'wooden_rod' },
+        { name: 'Iron Rod', value: 'iron_rod' },
+        { name: 'Golden Rod', value: 'golden_rod' },
+        { name: 'Diamond Rod', value: 'diamond_rod' },
+        { name: 'Legendary Rod', value: 'legendary_rod' },
+      ],
+    },
+   ],
+};
+
+const ALL_COMMANDS = [TEST_COMMAND, CHALLENGE_COMMAND, PING_COMMAND, FISHING_COMMAND, statsCommand, shop, inventory];
 
 console.log('App ID:', process.env.APP_ID);
 InstallGlobalCommands((process.env.APP_ID || '').trim(), ALL_COMMANDS);

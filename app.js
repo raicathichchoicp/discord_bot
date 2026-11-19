@@ -12,7 +12,8 @@ import {
 import { getRandomEmoji, DiscordRequest } from './utils.js';
 import { getShuffledOptions, getResult, getRPSChoices } from './game.js';
 import { getRandomFish } from './fishingGame.js';
-import { addPlayerRewards } from './playerStore.js';
+import { addPlayerRewards,getPlayerStats,equipRod } from './playerStore.js';
+import { buyRod,getRodLuck,getRodByName } from './shop.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -76,7 +77,9 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
     if (name === 'fishing') {
       const context = req.body.context;
       const userId = context === 0 ? req.body.member.user.id : req.body.user.id;
-      const caughtFish = getRandomFish();
+      const playerStats = getPlayerStats(userId);
+      const rodLuck = getRodLuck(playerStats.equippedRod);
+      const caughtFish = getRandomFish(rodLuck);
       const stats = addPlayerRewards(userId, caughtFish);
 
       return res.send({
@@ -91,13 +94,88 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
       const context = req.body.context;
       const userId = context === 0 ? req.body.member.user.id : req.body.user.id;
       const stats = getPlayerStats(userId);
+      const fishingLuck = getRodLuck(stats.equippedRod);
 
       return res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
-          content: `<@${userId}> has **${stats.gold} gold** and **${stats.xp} XP**.`,
+          content: `<@${userId}> has **${stats.gold} gold**, **${stats.xp} XP**, and **${fishingLuck} fishing luck**.`,
         }
       });
+    }
+
+    if(name === 'shop') {
+      const context = req.body.context;
+      const userId = context === 0 ? req.body.member.user.id : req.body.user.id;
+      const { options } = data;
+      const rodName = options?.[0]?.value;
+
+      if (!rodName) {
+        return res.send({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: { content: 'Choose a rod to buy.' },
+        });
+      }
+
+      try {
+        const result = buyRod(userId, rodName);
+        return res.send({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: `<@${userId}> ${result.message} Balance: **${result.updatedStats.gold} gold**.`,
+          },
+        });
+      } catch (error) {
+        return res.send({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: { content: error.message },
+        });
+      }
+    }
+
+    if (name === 'inventory') {
+      const context = req.body.context;
+      const userId = context === 0 ? req.body.member.user.id : req.body.user.id;
+      const stats = getPlayerStats(userId);
+      const {options} = data;
+      const action = options?.[0]?.value;
+      
+      if(action === 'view') {
+        const rodsList = stats.rods.length > 0 ? stats.rods.join(', ') : 'No rods owned.';
+        const fishingLuck = getRodLuck(stats.equippedRod);
+        return res.send({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: `<@${userId}>'s Inventory:\n- Gold: **${stats.gold}**\n- XP: **${stats.xp}**\n- Fishing Luck: **${fishingLuck}**\n- Rods: ${rodsList}\n- Equipped Rod: ${stats.equippedRod || 'None'}`,
+          },
+        });
+      }
+      else if(action === 'equip') {
+        const rodName = options?.[1]?.value;
+        if (!rodName) {
+          return res.send({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: 'Choose the rod you want to equip.' },
+          });
+        }
+
+        try {
+          const updatedStats = equipRod(userId, rodName);
+          const rod = getRodByName(rodName);
+          return res.send({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: `<@${userId}> equipped **${rod.name}**. Current fishing luck: **${getRodLuck(updatedStats.equippedRod)}**.`,
+            },
+          });
+        } catch (error) {
+          return res.send({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: error.message },
+          });
+        }
+      }
+      
     }
 
     console.error(`unknown command: ${name}`);
